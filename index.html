@@ -18,6 +18,8 @@ html,body{
   width:100%;
   height:100%;
 }
+
+/* Pannello iniziale */
 .panel{
   position:absolute;
   top:20px;
@@ -30,6 +32,7 @@ html,body{
   border-radius:18px;
   box-shadow:0 15px 35px rgba(0,0,0,.25);
 }
+
 .badge{
   display:inline-block;
   padding:6px 10px;
@@ -39,8 +42,10 @@ html,body{
   font-size:12px;
   margin-bottom:8px;
 }
+
 h1{margin:0 0 10px;font-size:24px;color:#111}
 .small{font-size:14px;color:#444;line-height:1.45}
+
 .btn{
   width:100%;
   margin-top:12px;
@@ -53,26 +58,23 @@ h1{margin:0 0 10px;font-size:24px;color:#111}
   cursor:pointer;
 }
 
-/* Goccia rossa utente */
+/* Marker gocce */
 .user-drop{
-  width:28px;
-  height:28px;
+  width:28px;height:28px;
   background:#e53935;
   border-radius:50% 50% 50% 0;
   transform:rotate(-45deg);
   border:2px solid #fff;
-  box-shadow:0 4px 10px rgba(0,0,0,.25);
   position:relative;
+  box-shadow:0 4px 10px rgba(0,0,0,.25);
 }
 .user-drop::after{
   content:'';
-  width:10px;
-  height:10px;
+  width:10px;height:10px;
   background:#fff;
   border-radius:50%;
   position:absolute;
-  top:7px;
-  left:7px;
+  top:7px;left:7px;
 }
 .user-label{
   margin-top:6px;
@@ -85,26 +87,22 @@ h1{margin:0 0 10px;font-size:24px;color:#111}
   white-space:nowrap;
 }
 
-/* Goccia blu POI */
 .poi-drop{
-  width:26px;
-  height:26px;
+  width:26px;height:26px;
   background:#0a66ff;
   border-radius:50% 50% 50% 0;
   transform:rotate(-45deg);
   border:2px solid #fff;
-  box-shadow:0 4px 10px rgba(0,0,0,.25);
   position:relative;
+  box-shadow:0 4px 10px rgba(0,0,0,.25);
 }
 .poi-drop::after{
   content:'';
-  width:9px;
-  height:9px;
+  width:9px;height:9px;
   background:#fff;
   border-radius:50%;
   position:absolute;
-  top:6px;
-  left:6px;
+  top:6px;left:6px;
 }
 .poi-label{
   margin-top:6px;
@@ -116,10 +114,55 @@ h1{margin:0 0 10px;font-size:24px;color:#111}
   font-weight:bold;
   white-space:nowrap;
 }
+
 .marker-wrap{
   display:flex;
   flex-direction:column;
   align-items:center;
+}
+
+/* RSS ticker */
+#ticker{
+  position:absolute;
+  left:0;
+  bottom:24px;
+  width:100%;
+  height:26px;
+  background:rgba(0,0,0,.75);
+  color:#fff;
+  overflow:hidden;
+  z-index:1200;
+  font-size:14px;
+  display:flex;
+  align-items:center;
+}
+
+#tickerText{
+  white-space:nowrap;
+  padding-left:100%;
+  animation:scrollTicker 45s linear infinite;
+}
+
+@keyframes scrollTicker{
+  0%   { transform:translateX(0); }
+  100% { transform:translateX(-100%); }
+}
+
+/* Firma */
+#footerBrand{
+  position:absolute;
+  bottom:0;
+  left:0;
+  width:100%;
+  height:24px;
+  background:rgba(18,58,99,.95);
+  color:#fff;
+  font-size:12px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:1201;
+  letter-spacing:1px;
 }
 </style>
 </head>
@@ -137,6 +180,14 @@ h1{margin:0 0 10px;font-size:24px;color:#111}
 
 <div id="map"></div>
 
+<div id="ticker">
+  <div id="tickerText"></div>
+</div>
+
+<div id="footerBrand">
+  PASSAMONTI_COMMUNICATION
+</div>
+
 <script>
 let map;
 let userPos=[39.2238,9.1217];
@@ -145,7 +196,20 @@ const params=new URLSearchParams(window.location.search);
 const street=params.get("street") || "Via della Città";
 document.getElementById("streetTitle").innerText=street;
 
+/* Messaggi RSS dal tuo Excel */
+const rssMessages=[
+"America's Cup: primo turno ore 16, secondo turno ore 19.",
+"Pirelli offre un rinfresco al sottopiano di Cagliari.",
+"Sant'Efisio: il Santo lascia la Chiesa alle 10.",
+"Piazza Yenne ore 11, Via Roma ore 13.",
+"Ramadura prevista lungo il percorso."
+];
+
+document.getElementById("tickerText").innerText =
+rssMessages.join("   ✦   ");
+
 function startApp(){
+
   document.getElementById("welcomePanel").style.display="none";
 
   if(!navigator.geolocation){
@@ -179,9 +243,9 @@ function initMap(){
   const userIcon=L.divIcon({
     className:"",
     html:
-      '<div class="marker-wrap">'+
-      '<div class="user-drop"></div>'+
-      '<div class="user-label">Tu sei qui</div>'+
+      '<div class=\"marker-wrap\">'+
+      '<div class=\"user-drop\"></div>'+
+      '<div class=\"user-label\">Tu sei qui</div>'+
       '</div>',
     iconSize:[90,58],
     iconAnchor:[45,58]
@@ -204,27 +268,23 @@ async function loadPOI(){
     data.query.geosearch.forEach(poi=>{
 
       const poiPos=[poi.lat,poi.lon];
-
-      const distance=Math.round(
-        map.distance(userPos,poiPos)
-      );
-
+      const distance=Math.round(map.distance(userPos,poiPos));
       const walk=Math.max(1,Math.round(distance/80));
 
       const lines=["1","5","6","7","8","M","PF","QS"];
       const l1=lines[Math.floor(Math.random()*lines.length)];
       const l2=lines[Math.floor(Math.random()*lines.length)];
-      const ctm=l1===l2?l1:l1+", "+l2;
+      const ctm=l1===l2?l1:l1+', '+l2;
 
       const poiIcon=L.divIcon({
         className:"",
         html:
-          '<div class="marker-wrap">'+
-          '<div class="poi-drop"></div>'+
-          '<div class="poi-label">'+poi.title+'</div>'+
+          '<div class=\"marker-wrap\">'+
+          '<div class=\"poi-drop\"></div>'+
+          '<div class=\"poi-label\">'+poi.title+'</div>'+
           '</div>',
-        iconSize:[130,56],
-        iconAnchor:[65,56]
+        iconSize:[140,56],
+        iconAnchor:[70,56]
       });
 
       L.marker(poiPos,{icon:poiIcon})
@@ -237,7 +297,6 @@ async function loadPOI(){
           encodeURIComponent(poi.title)+
           "')\">Apri Wikipedia</button>"
         );
-
     });
 
   }catch(e){}
