@@ -22,7 +22,6 @@ html,body{
   height:100%;
 }
 
-/* Pannello */
 .shell{
   position:absolute;
   top:16px;
@@ -42,12 +41,6 @@ html,body{
   color:#fff;
 }
 
-.head h2{
-  margin:0;
-  font-size:24px;
-}
-
-/* MENU centrato */
 .tabs{
   display:flex;
   justify-content:center;
@@ -93,7 +86,7 @@ input{
   color:#667;
 }
 
-/* Marker gocce */
+/* Gocce */
 .drop{
   width:26px;
   height:26px;
@@ -102,9 +95,8 @@ input{
   border:2px solid #fff;
   box-shadow:0 6px 12px rgba(0,0,0,.2);
 }
-
-.red{ background:#e53935; }
-.blue{ background:#0a66ff; }
+.red{background:#e53935;}
+.blue{background:#0a66ff;}
 
 .mk{
   display:flex;
@@ -122,7 +114,7 @@ input{
   white-space:nowrap;
 }
 
-/* Ticker */
+/* RSS */
 #ticker{
   position:absolute;
   left:0;
@@ -144,10 +136,9 @@ input{
 }
 
 @keyframes scroll{
-  to{ transform:translateX(-100%); }
+  to{transform:translateX(-100%);}
 }
 
-/* Footer */
 #brand{
   position:absolute;
   left:0;
@@ -160,7 +151,6 @@ input{
   justify-content:center;
   align-items:center;
   font-size:12px;
-  letter-spacing:1px;
   z-index:1101;
 }
 </style>
@@ -172,254 +162,269 @@ input{
 
 <div class="shell">
 
-  <div class="head">
-    <h2>Cagliari Smart City PRO</h2>
-    <div>Toponomastica Aumentata • QR • Voice</div>
-  </div>
+<div class="head">
+<h2 style="margin:0">Cagliari Smart City PRO</h2>
+<div>Toponomastica Aumentata • QR • Voice</div>
+</div>
 
-  <div class="tabs">
-    <button class="active" onclick="openPane(event,'p1')">Mappa</button>
-    <button onclick="openPane(event,'p2')">QR</button>
-    <button onclick="openPane(event,'p3')">Voice</button>
-    <button onclick="openPane(event,'p4')">Info</button>
-  </div>
+<div class="tabs">
+<button class="active" onclick="openPane(event,'p1')">Mappa</button>
+<button onclick="openPane(event,'p2')">QR</button>
+<button onclick="openPane(event,'p3')">Voice</button>
+<button onclick="openPane(event,'p4')">Info</button>
+</div>
 
-  <!-- MAPPA -->
-  <div id="p1" class="pane active">
-    <div class="section">Apri esperienza geolocalizzata</div>
-    <input id="street" value="Viale Trieste">
-    <button class="btn" onclick="startApp()">Autorizza posizione</button>
-  </div>
+<div id="p1" class="pane active">
+<div class="section">Apri esperienza geolocalizzata</div>
+<button class="btn" onclick="startApp()">Autorizza posizione</button>
+</div>
 
-  <!-- QR -->
-  <div id="p2" class="pane">
-    <div class="section">Genera QR per una via</div>
-    <input id="streetQR" value="Via Roma">
-    <button class="btn" onclick="makeQR()">Genera QR</button>
-    <div id="qrcode" style="margin-top:12px;"></div>
-  </div>
+<div id="p2" class="pane">
+<div class="section">Genera QR via</div>
+<input id="streetQR" value="Via Roma">
+<button class="btn" onclick="makeQR()">Genera QR</button>
+<div id="qrcode" style="margin-top:12px;"></div>
+</div>
 
-  <!-- VOICE -->
-  <div id="p3" class="pane">
-    <div class="section">Dì: Ciao • Bonjour • Hello</div>
-    <button class="btn" onclick="listen()">🎤 Attiva ascolto</button>
-    <div id="voiceStatus" style="margin-top:10px;"></div>
-  </div>
+<div id="p3" class="pane">
+<div class="section">Dì: Ciao • Bonjour • Hello</div>
+<button class="btn" onclick="listen()">🎤 Attiva ascolto</button>
+<div id="voiceStatus" style="margin-top:10px;"></div>
+</div>
 
-  <!-- INFO -->
-  <div id="p4" class="pane">
-    <p>
-      Sistema urbano intelligente per turismo,
-      mobilità ed eventi. Accesso via QR o voce.
-    </p>
-  </div>
+<div id="p4" class="pane">
+Sistema urbano intelligente per turismo, eventi e mobilità.
+</div>
 
 </div>
 
 <div id="ticker">
-  <span id="tickerText"></span>
+<span id="tickerText"></span>
 </div>
 
 <div id="brand">
-  PASSAMONTI_COMMUNICATION
+PASSAMONTI_COMMUNICATION
 </div>
 
 <script>
-const map = L.map("map").setView([39.2238,9.1217],13);
+const map=L.map("map").setView([39.2238,9.1217],13);
 
 L.tileLayer(
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {maxZoom:20}
+"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+{maxZoom:20}
 ).addTo(map);
 
 let userMarker;
 
-/* MENU */
+/* TAB MENU */
 function openPane(event,id){
 
-  document.querySelectorAll(".pane")
-    .forEach(p => p.classList.remove("active"));
+document.querySelectorAll(".pane")
+.forEach(p=>p.classList.remove("active"));
 
-  document.querySelectorAll(".tabs button")
-    .forEach(b => b.classList.remove("active"));
+document.querySelectorAll(".tabs button")
+.forEach(b=>b.classList.remove("active"));
 
-  document.getElementById(id)
-    .classList.add("active");
+document.getElementById(id)
+.classList.add("active");
 
-  event.target.classList.add("active");
+event.target.classList.add("active");
 }
 
-/* AVVIO MAPPA */
+/* MAPPA */
 function startApp(){
 
-  navigator.geolocation.getCurrentPosition(
-    function(pos){
-      loadMap([
-        pos.coords.latitude,
-        pos.coords.longitude
-      ]);
-    },
-    function(){
-      loadMap([39.2238,9.1217]);
-    }
-  );
+navigator.geolocation.getCurrentPosition(
+function(pos){
+loadMap([
+pos.coords.latitude,
+pos.coords.longitude
+]);
+},
+function(){
+loadMap([39.2238,9.1217]);
+}
+);
 }
 
-/* MAPPA + GOCCE */
 function loadMap(pos){
 
-  map.setView(pos,16);
+map.setView(pos,16);
 
-  if(userMarker){
-    map.removeLayer(userMarker);
-  }
+if(userMarker){
+map.removeLayer(userMarker);
+}
 
-  const userIcon = L.divIcon({
-    className:"",
-    html:
-      '<div class="mk">'+
-      '<div class="drop red"></div>'+
-      '<div class="lbl">Tu sei qui</div>'+
-      '</div>',
-    iconSize:[90,56],
-    iconAnchor:[45,56]
-  });
+const userIcon=L.divIcon({
+className:"",
+html:
+'<div class="mk">'+
+'<div class="drop red"></div>'+
+'<div class="lbl">Tu sei qui</div>'+
+'</div>',
+iconSize:[90,56],
+iconAnchor:[45,56]
+});
 
-  userMarker = L.marker(pos,{icon:userIcon}).addTo(map);
+userMarker=L.marker(pos,{icon:userIcon}).addTo(map);
 
-  fetch(
-    "https://it.wikipedia.org/w/api.php?action=query&list=geosearch"+
-    "&gscoord="+pos[0]+"|"+pos[1]+
-    "&gsradius=3000&gslimit=15&format=json&origin=*"
-  )
-  .then(r => r.json())
-  .then(data => {
+fetch(
+"https://it.wikipedia.org/w/api.php?action=query&list=geosearch"+
+"&gscoord="+pos[0]+"|"+pos[1]+
+"&gsradius=3000&gslimit=15&format=json&origin=*"
+)
+.then(r=>r.json())
+.then(data=>{
 
-    data.query.geosearch.forEach(poi => {
+data.query.geosearch.forEach(poi=>{
 
-      const poiPos = [poi.lat, poi.lon];
+const poiPos=[poi.lat,poi.lon];
 
-      const dist = Math.round(
-        map.distance(pos, poiPos)
-      );
+const dist=Math.round(
+map.distance(pos,poiPos)
+);
 
-      const walk = Math.max(
-        1,
-        Math.round(dist / 80)
-      );
+const walk=Math.max(
+1,
+Math.round(dist/80)
+);
 
-      const poiIcon = L.divIcon({
-        className:"",
-        html:
-          '<div class="mk">'+
-          '<div class="drop blue"></div>'+
-          '<div class="lbl">'+poi.title+'</div>'+
-          '</div>',
-        iconSize:[140,56],
-        iconAnchor:[70,56]
-      });
+const poiIcon=L.divIcon({
+className:"",
+html:
+'<div class="mk">'+
+'<div class="drop blue"></div>'+
+'<div class="lbl">'+poi.title+'</div>'+
+'</div>',
+iconSize:[140,56],
+iconAnchor:[70,56]
+});
 
-      L.marker(poiPos,{icon:poiIcon})
-        .addTo(map)
-        .bindPopup(
-          "<b>"+poi.title+"</b><br>"+
-          "🚌 CTM: 1, M<br>"+
-          "🚶 "+walk+" min a piedi"
-        );
-    });
+L.marker(poiPos,{icon:poiIcon})
+.addTo(map)
+.bindPopup(
+"<b>"+poi.title+"</b><br>"+
+"🚌 CTM: 1, M<br>"+
+"🚶 "+walk+" min a piedi"
+);
 
-  });
+});
+
+});
 }
 
 /* QR */
 function makeQR(){
 
-  const street =
-    document.getElementById("streetQR").value;
+const street=document.getElementById("streetQR").value;
 
-  document.getElementById("qrcode").innerHTML = "";
+document.getElementById("qrcode").innerHTML="";
 
-  new QRCode(
-    document.getElementById("qrcode"),
-    {
-      text:
-        location.origin +
-        location.pathname +
-        "?street=" +
-        encodeURIComponent(street),
-      width:200,
-      height:200
-    }
-  );
+new QRCode(
+document.getElementById("qrcode"),
+{
+text:
+location.origin+
+location.pathname+
+"?street="+
+encodeURIComponent(street),
+width:200,
+height:200
+});
 }
 
-/* VOICE FIX */
+/* VOICE NUOVO */
 function listen(){
 
-  const statusBox =
-    document.getElementById("voiceStatus");
+const statusBox=
+document.getElementById("voiceStatus");
 
-  const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
+const SpeechRecognition=
+window.SpeechRecognition||
+window.webkitSpeechRecognition;
 
-  if(!SpeechRecognition){
-    statusBox.innerText =
-      "Riconoscimento vocale non supportato.";
-    return;
-  }
-
-  const recognition =
-    new SpeechRecognition();
-
-  recognition.lang = "it-IT";
-  recognition.interimResults = false;
-  recognition.continuous = false;
-  recognition.maxAlternatives = 5;
-
-  statusBox.innerText = "Ti ascolto...";
-
-  recognition.onresult = function(event){
-
-    const text =
-      event.results[0][0].transcript
-      .toLowerCase()
-      .trim();
-
-    statusBox.innerText =
-      "Hai detto: " + text;
-
-    if(
-      text.includes("ciao") ||
-      text.includes("bonjour") ||
-      text.includes("hello")
-    ){
-      statusBox.innerText =
-        "Parola riconosciuta. Apro la mappa...";
-
-      setTimeout(function(){
-        startApp();
-      },700);
-
-    }else{
-      statusBox.innerText =
-        "Parola non valida.";
-    }
-  };
-
-  recognition.onerror = function(event){
-    statusBox.innerText =
-      "Errore microfono: " + event.error;
-  };
-
-  recognition.start();
+if(!SpeechRecognition){
+manualFallback();
+return;
 }
 
-/* TICKER */
-document.getElementById("tickerText").innerText =
-"America's Cup: regate ore 16 e 19 ✦ " +
-"Sant'Efisio: Piazza Yenne ore 11 ✦ " +
-"Via Roma ore 13 ✦ " +
+const recognition=new SpeechRecognition();
+
+recognition.lang="it-IT";
+recognition.interimResults=false;
+recognition.continuous=false;
+recognition.maxAlternatives=5;
+
+statusBox.innerText="Ti ascolto...";
+
+let received=false;
+
+recognition.onresult=function(event){
+
+received=true;
+
+const text=
+event.results[0][0].transcript
+.toLowerCase()
+.trim();
+
+statusBox.innerText=
+"Hai detto: "+text;
+
+checkMagicWord(text);
+};
+
+recognition.onerror=function(){
+manualFallback();
+};
+
+recognition.onend=function(){
+if(!received){
+manualFallback();
+}
+};
+
+recognition.start();
+}
+
+function checkMagicWord(text){
+
+if(
+text.includes("ciao") ||
+text.includes("bonjour") ||
+text.includes("hello")
+){
+document.getElementById("voiceStatus").innerText=
+"Parola riconosciuta. Apro la mappa...";
+
+setTimeout(function(){
+startApp();
+},700);
+
+}else{
+document.getElementById("voiceStatus").innerText=
+"Parola non valida.";
+}
+}
+
+function manualFallback(){
+
+const txt=prompt(
+"Pronuncia non rilevata.\nScrivi una parola chiave:\nCiao / Bonjour / Hello"
+);
+
+if(!txt) return;
+
+checkMagicWord(
+txt.toLowerCase().trim()
+);
+}
+
+/* RSS */
+document.getElementById("tickerText").innerText=
+"America's Cup ore 16 e 19 ✦ "+
+"Sant'Efisio Piazza Yenne ore 11 ✦ "+
+"Via Roma ore 13 ✦ "+
 "Benvenuti a Cagliari";
 </script>
 
