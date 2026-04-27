@@ -1,1 +1,427 @@
-<!DOCTYPE html><html lang='it'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Cagliari Smart City PRO</title><link rel='stylesheet' href='https://unpkg.com/leaflet/dist/leaflet.css'><script src='https://unpkg.com/leaflet/dist/leaflet.js'></script><script src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'></script><style>html,body{margin:0;height:100%;font-family:Arial,sans-serif;background:#08111f}#map{height:100vh;width:100%}.shell{position:absolute;top:16px;left:16px;z-index:1000;width:420px;max-width:calc(100% - 32px);background:rgba(255,255,255,.96);border-radius:22px;box-shadow:0 20px 40px rgba(0,0,0,.25);overflow:hidden}.head{padding:18px;background:linear-gradient(135deg,#123a63,#0a66ff);color:#fff}.tabs{display:flex;gap:8px;flex-wrap:wrap;padding:12px}.tabs button,.btn{border:0;padding:10px 12px;border-radius:12px;cursor:pointer}.tabs button.active,.btn{background:#0a66ff;color:#fff}.pane{padding:14px;display:none}.pane.active{display:block}input{width:100%;padding:12px;border:1px solid #d8dbe2;border-radius:12px;margin:8px 0}.section{font-size:12px;color:#667}.drop{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 6px 12px rgba(0,0,0,.2)}.red{background:#e53935}.blue{background:#0a66ff}.mk{display:flex;flex-direction:column;align-items:center}.lbl{margin-top:6px;background:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap}#ticker{position:absolute;left:0;bottom:24px;width:100%;height:28px;background:rgba(0,0,0,.8);color:#fff;overflow:hidden;z-index:1100;display:flex;align-items:center}#ticker span{white-space:nowrap;padding-left:100%;animation:scroll 48s linear infinite}@keyframes scroll{to{transform:translateX(-100%)}}#brand{position:absolute;left:0;bottom:0;width:100%;height:24px;background:#123a63;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;letter-spacing:1px;z-index:1101}</style></head><body><div id='map'></div><div class='shell'><div class='head'><h2 style='margin:0'>Cagliari Smart City PRO</h2><div style='opacity:.9'>Toponomastica Aumentata • Passpartout • QR • Voice</div></div><div class='tabs'><button class='active' onclick='openPane(event,"p1")'>Mappa</button><button onclick='openPane(event,"p2")'>QR Vie</button><button onclick='openPane(event,"p3")'>Voice</button><button onclick='openPane(event,"p4")'>Info</button></div><div id='p1' class='pane active'><div class='section'>Apri esperienza geolocalizzata</div><input id='street' value='Viale Trieste'><button class='btn' onclick='startApp()'>Autorizza posizione</button></div><div id='p2' class='pane'><div class='section'>Genera QR per una via</div><input id='streetQR' value='Via Roma'><button class='btn' onclick='makeQR()'>Genera QR</button><div id='qrcode' style='margin-top:12px'></div></div><div id='p3' class='pane'><div class='section'>Dì: Ciao • Bonjour • Hello</div><button class='btn' onclick='listen()'>🎤 Attiva ascolto</button><div id='voiceStatus' style='margin-top:10px'></div></div><div id='p4' class='pane'><p>Suite dimostrativa per turismo, eventi e mobilità urbana. Accesso via QR o voce senza download.</p></div></div><div id='ticker'><span id='tickerText'></span></div><div id='brand'>PASSAMONTI_COMMUNICATION</div><script>const map=L.map('map').setView([39.2238,9.1217],13);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20}).addTo(map);let userMarker;function openPane(e,id){document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');e.target.classList.add('active')}function startApp(){navigator.geolocation.getCurrentPosition(p=>loadMap([p.coords.latitude,p.coords.longitude]),()=>loadMap([39.2238,9.1217]))}function loadMap(pos){map.setView(pos,16);if(userMarker)map.removeLayer(userMarker);const ui=L.divIcon({className:'',html:'<div class="mk"><div class="drop red"></div><div class="lbl">Tu sei qui</div></div>',iconSize:[90,56],iconAnchor:[45,56]});userMarker=L.marker(pos,{icon:ui}).addTo(map);fetch('https://it.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord='+pos[0]+'|'+pos[1]+'&gsradius=3000&gslimit=15&format=json&origin=*').then(r=>r.json()).then(d=>d.query.geosearch.forEach(p=>{const ic=L.divIcon({className:'',html:'<div class="mk"><div class="drop blue"></div><div class="lbl">'+p.title+'</div></div>',iconSize:[130,56],iconAnchor:[65,56]});const dist=Math.round(map.distance(pos,[p.lat,p.lon]));const walk=Math.max(1,Math.round(dist/80));L.marker([p.lat,p.lon],{icon:ic}).addTo(map).bindPopup('<b>'+p.title+'</b><br>🚌 CTM: 1, M<br>🚶 '+walk+' min a piedi');}))}function makeQR(){const s=document.getElementById('streetQR').value;document.getElementById('qrcode').innerHTML='';new QRCode(document.getElementById('qrcode'),{text:location.origin+location.pathname+'?street='+encodeURIComponent(s),width:200,height:200})}function listen(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){voiceStatus.innerText='Browser non supportato';return;}const r=new SR();voiceStatus.innerText='Ti ascolto...';r.onresult=e=>{const t=e.results[0][0].transcript.toLowerCase();voiceStatus.innerText='Hai detto: '+t;if(t.includes('ciao')||t.includes('bonjour')||t.includes('hello'))startApp();};r.start()}document.getElementById('tickerText').innerText='America\'s Cup: regate ore 16 e 19 ✦ Sant\'Efisio: Piazza Yenne ore 11 ✦ Via Roma ore 13 ✦ Benvenuti a Cagliari';</script></body></html>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cagliari Smart City PRO</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+html,body{
+  margin:0;
+  height:100%;
+  font-family:Arial,sans-serif;
+  background:#08111f;
+}
+
+#map{
+  width:100%;
+  height:100%;
+}
+
+/* Pannello */
+.shell{
+  position:absolute;
+  top:16px;
+  left:16px;
+  z-index:1000;
+  width:430px;
+  max-width:calc(100% - 32px);
+  background:rgba(255,255,255,.96);
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 20px 40px rgba(0,0,0,.25);
+}
+
+.head{
+  padding:18px;
+  background:linear-gradient(135deg,#123a63,#0a66ff);
+  color:#fff;
+}
+
+.head h2{
+  margin:0;
+  font-size:24px;
+}
+
+/* MENU centrato */
+.tabs{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  padding:12px;
+}
+
+.tabs button,
+.btn{
+  border:none;
+  padding:10px 12px;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+.tabs button.active,
+.btn{
+  background:#0a66ff;
+  color:#fff;
+}
+
+.pane{
+  display:none;
+  padding:14px;
+}
+
+.pane.active{
+  display:block;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  border:1px solid #d8dbe2;
+  border-radius:12px;
+  margin:8px 0;
+}
+
+.section{
+  font-size:12px;
+  color:#667;
+}
+
+/* Marker gocce */
+.drop{
+  width:26px;
+  height:26px;
+  border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg);
+  border:2px solid #fff;
+  box-shadow:0 6px 12px rgba(0,0,0,.2);
+}
+
+.red{ background:#e53935; }
+.blue{ background:#0a66ff; }
+
+.mk{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.lbl{
+  margin-top:6px;
+  background:#fff;
+  padding:2px 8px;
+  border-radius:10px;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+/* Ticker */
+#ticker{
+  position:absolute;
+  left:0;
+  bottom:24px;
+  width:100%;
+  height:28px;
+  background:rgba(0,0,0,.82);
+  color:#fff;
+  overflow:hidden;
+  z-index:1100;
+  display:flex;
+  align-items:center;
+}
+
+#ticker span{
+  white-space:nowrap;
+  padding-left:100%;
+  animation:scroll 48s linear infinite;
+}
+
+@keyframes scroll{
+  to{ transform:translateX(-100%); }
+}
+
+/* Footer */
+#brand{
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:100%;
+  height:24px;
+  background:#123a63;
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:12px;
+  letter-spacing:1px;
+  z-index:1101;
+}
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div class="shell">
+
+  <div class="head">
+    <h2>Cagliari Smart City PRO</h2>
+    <div>Toponomastica Aumentata • QR • Voice</div>
+  </div>
+
+  <div class="tabs">
+    <button class="active" onclick="openPane(event,'p1')">Mappa</button>
+    <button onclick="openPane(event,'p2')">QR</button>
+    <button onclick="openPane(event,'p3')">Voice</button>
+    <button onclick="openPane(event,'p4')">Info</button>
+  </div>
+
+  <!-- MAPPA -->
+  <div id="p1" class="pane active">
+    <div class="section">Apri esperienza geolocalizzata</div>
+    <input id="street" value="Viale Trieste">
+    <button class="btn" onclick="startApp()">Autorizza posizione</button>
+  </div>
+
+  <!-- QR -->
+  <div id="p2" class="pane">
+    <div class="section">Genera QR per una via</div>
+    <input id="streetQR" value="Via Roma">
+    <button class="btn" onclick="makeQR()">Genera QR</button>
+    <div id="qrcode" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- VOICE -->
+  <div id="p3" class="pane">
+    <div class="section">Dì: Ciao • Bonjour • Hello</div>
+    <button class="btn" onclick="listen()">🎤 Attiva ascolto</button>
+    <div id="voiceStatus" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- INFO -->
+  <div id="p4" class="pane">
+    <p>
+      Sistema urbano intelligente per turismo,
+      mobilità ed eventi. Accesso via QR o voce.
+    </p>
+  </div>
+
+</div>
+
+<div id="ticker">
+  <span id="tickerText"></span>
+</div>
+
+<div id="brand">
+  PASSAMONTI_COMMUNICATION
+</div>
+
+<script>
+const map = L.map("map").setView([39.2238,9.1217],13);
+
+L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {maxZoom:20}
+).addTo(map);
+
+let userMarker;
+
+/* MENU */
+function openPane(event,id){
+
+  document.querySelectorAll(".pane")
+    .forEach(p => p.classList.remove("active"));
+
+  document.querySelectorAll(".tabs button")
+    .forEach(b => b.classList.remove("active"));
+
+  document.getElementById(id)
+    .classList.add("active");
+
+  event.target.classList.add("active");
+}
+
+/* AVVIO MAPPA */
+function startApp(){
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      loadMap([
+        pos.coords.latitude,
+        pos.coords.longitude
+      ]);
+    },
+    function(){
+      loadMap([39.2238,9.1217]);
+    }
+  );
+}
+
+/* MAPPA + GOCCE */
+function loadMap(pos){
+
+  map.setView(pos,16);
+
+  if(userMarker){
+    map.removeLayer(userMarker);
+  }
+
+  const userIcon = L.divIcon({
+    className:"",
+    html:
+      '<div class="mk">'+
+      '<div class="drop red"></div>'+
+      '<div class="lbl">Tu sei qui</div>'+
+      '</div>',
+    iconSize:[90,56],
+    iconAnchor:[45,56]
+  });
+
+  userMarker = L.marker(pos,{icon:userIcon}).addTo(map);
+
+  fetch(
+    "https://it.wikipedia.org/w/api.php?action=query&list=geosearch"+
+    "&gscoord="+pos[0]+"|"+pos[1]+
+    "&gsradius=3000&gslimit=15&format=json&origin=*"
+  )
+  .then(r => r.json())
+  .then(data => {
+
+    data.query.geosearch.forEach(poi => {
+
+      const poiPos = [poi.lat, poi.lon];
+
+      const dist = Math.round(
+        map.distance(pos, poiPos)
+      );
+
+      const walk = Math.max(
+        1,
+        Math.round(dist / 80)
+      );
+
+      const poiIcon = L.divIcon({
+        className:"",
+        html:
+          '<div class="mk">'+
+          '<div class="drop blue"></div>'+
+          '<div class="lbl">'+poi.title+'</div>'+
+          '</div>',
+        iconSize:[140,56],
+        iconAnchor:[70,56]
+      });
+
+      L.marker(poiPos,{icon:poiIcon})
+        .addTo(map)
+        .bindPopup(
+          "<b>"+poi.title+"</b><br>"+
+          "🚌 CTM: 1, M<br>"+
+          "🚶 "+walk+" min a piedi"
+        );
+    });
+
+  });
+}
+
+/* QR */
+function makeQR(){
+
+  const street =
+    document.getElementById("streetQR").value;
+
+  document.getElementById("qrcode").innerHTML = "";
+
+  new QRCode(
+    document.getElementById("qrcode"),
+    {
+      text:
+        location.origin +
+        location.pathname +
+        "?street=" +
+        encodeURIComponent(street),
+      width:200,
+      height:200
+    }
+  );
+}
+
+/* VOICE FIX */
+function listen(){
+
+  const statusBox =
+    document.getElementById("voiceStatus");
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if(!SpeechRecognition){
+    statusBox.innerText =
+      "Riconoscimento vocale non supportato.";
+    return;
+  }
+
+  const recognition =
+    new SpeechRecognition();
+
+  recognition.lang = "it-IT";
+  recognition.interimResults = false;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 5;
+
+  statusBox.innerText = "Ti ascolto...";
+
+  recognition.onresult = function(event){
+
+    const text =
+      event.results[0][0].transcript
+      .toLowerCase()
+      .trim();
+
+    statusBox.innerText =
+      "Hai detto: " + text;
+
+    if(
+      text.includes("ciao") ||
+      text.includes("bonjour") ||
+      text.includes("hello")
+    ){
+      statusBox.innerText =
+        "Parola riconosciuta. Apro la mappa...";
+
+      setTimeout(function(){
+        startApp();
+      },700);
+
+    }else{
+      statusBox.innerText =
+        "Parola non valida.";
+    }
+  };
+
+  recognition.onerror = function(event){
+    statusBox.innerText =
+      "Errore microfono: " + event.error;
+  };
+
+  recognition.start();
+}
+
+/* TICKER */
+document.getElementById("tickerText").innerText =
+"America's Cup: regate ore 16 e 19 ✦ " +
+"Sant'Efisio: Piazza Yenne ore 11 ✦ " +
+"Via Roma ore 13 ✦ " +
+"Benvenuti a Cagliari";
+</script>
+
+</body>
+</html>
